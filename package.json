@@ -1,6 +1,6 @@
 {
   "name": "@rave-names/rave",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Utilities for Rave Names",
   "main": "src/index.js",
   "scripts": {
