@@ -1,8 +1,8 @@
-import { RaveName }                                               from '../types.d';
-import { providers, Contract, Signer, utils, BigNumber }          from 'ethers';
-import { raveabi }                                                from '../abis/Rave.abi';
-import { log }                                                    from './logging';
-import { contracts }                                              from './contracts';
+import { RaveName }                                                          from '../types.d';
+import { providers, Contract, Signer, utils, BigNumber, constants }          from 'ethers';
+import { raveabi }                                                           from '../abis/Rave.abi';
+import { log }                                                               from './logging';
+import { contracts }                                                         from './contracts';
 
 function s(x: any) {
   return x.toString();
@@ -171,5 +171,27 @@ export class Rave {
    */
    public async getPrice(): Promise<BigNumber> {
       return (await this.contract.FEE_AMT())[0];
+   }
+
+   /**
+   * owns
+   * ===========================================================================
+   * Returns if an address holds a name
+   *
+   * [returns]
+   *  => {owms} : boolean; (If the name is owned)
+   */
+   public async owns(address: string): Promise<boolean> {
+     log(address);
+
+     if (address === constants.AddressZero) return false; // zero address cant be owner
+
+     const name = (await this.contract.functions.getNameFromOwner(address))[0].toLowerCase();
+
+     if (name.length === 0) {
+       return false;
+     } else {
+       return true;
+     }
    }
 }

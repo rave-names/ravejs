@@ -146,6 +146,15 @@ Output:
 - `price` number
   - The price of 1 Rave Name.
 
+### `owns()`
+
+Check if an address owns a Rave Name.
+
+Output:
+
+- `owns` boolean
+  - If the address owns a name.
+
 ## The utilities
 
 ### Contracts
@@ -169,7 +178,8 @@ const exampleName: RaveName = {
   owner: '0x3e522051a9b1958aa1e828ac24afba4a551df37d',
   avatar: 'https://cyber.fantoms.art/Opr.png',
   addresses: JSON.parse(addys),
-}```
+}
+```
 
 
 ## Thanks for reading!
