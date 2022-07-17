@@ -2,15 +2,17 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Rave = void 0;
 const ethers_1 = require("ethers");
-const Rave_abi_1 = require("../abis/Rave.abi");
+const abis_1 = require("../abis");
 const logging_1 = require("./logging");
 function s(x) {
     return x.toString();
 }
 class Rave {
-    constructor(address = '0x6A403FFbBF8545EE0d99a63A72e5f335dFCaE2Bd', provider = (new ethers_1.providers.JsonRpcProvider('https://rpc.ftm.tools'))) {
-        this.contract = new ethers_1.Contract(address, Rave_abi_1.raveabi, provider);
+    constructor(address = '0x6A403FFbBF8545EE0d99a63A72e5f335dFCaE2Bd', provider = (new ethers_1.providers.JsonRpcProvider('https://rpc.ftm.tools')), externalRegistry = '0xaFa8da49b9c30AFDaf80A2DF5d01b36814c6d1ac') {
+        this.contract = new ethers_1.Contract(address, abis_1.raveabi, provider);
         this.address = address;
+        this.externalRegistry = externalRegistry;
+        this.externalContract = new ethers_1.Contract(externalRegistry, abis_1.externalabi, provider);
     }
     /**
      * resolveNameToAddress
@@ -65,7 +67,7 @@ class Rave {
     *
     */
     async registerName(name, signer, price) {
-        let contract = new ethers_1.Contract(this.address, Rave_abi_1.raveabi, signer);
+        let contract = new ethers_1.Contract(this.address, abis_1.raveabi, signer);
         let transaction = await contract.functions.registerName(name.toUpperCase(), { value: ethers_1.utils.parseEther(s(price)) });
     }
     /**
@@ -91,12 +93,21 @@ class Rave {
             };
             return zeroName;
         }
+        let addresses_parsed;
+        try {
+            addresses_parsed = JSON.parse(addresses);
+        }
+        catch (e) {
+            addresses_parsed = {
+                ftm: address
+            };
+        }
         const resolvedName = {
             name: name.toLowerCase(),
             isOwned: true,
             owner: address,
             avatar: avatar,
-            addresses: JSON.parse(addresses),
+            addresses: addresses_parsed,
         };
         return resolvedName;
     }
@@ -132,7 +143,7 @@ class Rave {
     */
     restart(options) {
         if (options.provider) {
-            this.contract = new ethers_1.Contract((options.address || this.address), Rave_abi_1.raveabi, options.provider);
+            this.contract = new ethers_1.Contract((options.address || this.address), abis_1.raveabi, options.provider);
             return true;
         }
         else {
@@ -169,6 +180,52 @@ class Rave {
         else {
             return true;
         }
+    }
+    /**
+    * getText
+    * ===========================================================================
+    * Returns the text record of a name
+    *
+    * [inputs]
+    *  => {name} : string; (The name)
+    *  => {key} : string; (The key to search for)
+    *
+    * [returns]
+    *  => {record} : string | null; (The record)
+    */
+    async getText(name, key) {
+        (0, logging_1.log)(name);
+        (0, logging_1.log)(key);
+        let value = null;
+        try {
+            value = (await this.externalContract.getText(name.toUpperCase(), key));
+        }
+        catch (e) {
+            throw e;
+        }
+        ;
+        return value;
+    }
+    /**
+    * getTexts
+    * ===========================================================================
+    * Returns the text records of a name
+    *
+    * [inputs]
+    *  => {name} : string; (The name)
+    *
+    * [returns]
+    *  => {records} : string[]; (The records)
+    */
+    async getTexts(name) {
+        (0, logging_1.log)(name);
+        const records = (await this.externalContract.getRecords(name.toUpperCase()));
+        let resolvedRecords = [];
+        for (let key = 0; key < records.length; key++) {
+            const value = (await this.externalContract.getText(name.toUpperCase(), records[key]));
+            resolvedRecords.push({ key: records[key], value: (value || null) });
+        }
+        return resolvedRecords || null;
     }
 }
 exports.Rave = Rave;

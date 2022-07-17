@@ -1,6 +1,6 @@
 import { RaveName }                                                          from '../types.d';
 import { providers, Contract, Signer, utils, BigNumber, constants }          from 'ethers';
-import { raveabi }                                                           from '../abis/Rave.abi';
+import { raveabi, externalabi }                                              from '../abis';
 import { log }                                                               from './logging';
 import { contracts }                                                         from './contracts';
 
@@ -13,16 +13,26 @@ type RestartOptions = {
   address?: any;
 }
 
+export type Record = {
+  key: string;
+  value: string | null;
+}
+
 export class Rave {
   contract!: Contract;
   address!: string;
+  externalRegistry!: string;
+  externalContract!: Contract;
 
   constructor(
     address: string = '0x6A403FFbBF8545EE0d99a63A72e5f335dFCaE2Bd',
-    provider: providers.Provider = (new providers.JsonRpcProvider('https://rpc.ftm.tools'))
+    provider: providers.Provider = (new providers.JsonRpcProvider('https://rpc.ftm.tools')),
+    externalRegistry: string = '0xaFa8da49b9c30AFDaf80A2DF5d01b36814c6d1ac',
   ) {
     this.contract = new Contract(address, raveabi, provider);
     this.address = address;
+    this.externalRegistry = externalRegistry;
+    this.externalContract = new Contract(externalRegistry, externalabi, provider);
   }
 
   /**
@@ -108,12 +118,21 @@ export class Rave {
        return zeroName;
      }
 
+     let addresses_parsed;
+     try {
+       addresses_parsed = JSON.parse(addresses)
+     } catch (e) {
+       addresses_parsed = {
+         ftm: address
+       }
+     }
+
      const resolvedName: RaveName = {
        name: name.toLowerCase(),
        isOwned: true,
        owner: address,
        avatar: avatar,
-       addresses: JSON.parse(addresses),
+       addresses: addresses_parsed,
      }
 
      return resolvedName;
@@ -193,5 +212,54 @@ export class Rave {
      } else {
        return true;
      }
+   }
+
+   /**
+   * getText
+   * ===========================================================================
+   * Returns the text record of a name
+   *
+   * [inputs]
+   *  => {name} : string; (The name)
+   *  => {key} : string; (The key to search for)
+   *
+   * [returns]
+   *  => {record} : string | null; (The record)
+   */
+   public async getText(name: string, key: string): Promise<string | null> {
+     log(name); log(key);
+
+     let value = null;
+
+     try {
+       value = (await this.externalContract.getText(name.toUpperCase(), key));
+     } catch (e) { throw e };
+
+     return value;
+   }
+
+   /**
+   * getTexts
+   * ===========================================================================
+   * Returns the text records of a name
+   *
+   * [inputs]
+   *  => {name} : string; (The name)
+   *
+   * [returns]
+   *  => {records} : string[]; (The records)
+   */
+   public async getTexts(name: string): Promise<Record[] | null> {
+     log(name);
+
+     const records = (await this.externalContract.getRecords(name.toUpperCase()));
+
+     let resolvedRecords: Record[] = [];
+     for (let key = 0; key < records.length; key++) {
+       const value = (await this.externalContract.getText(name.toUpperCase(), records[key]));
+       resolvedRecords.push({key: records[key], value: (value || null)} as Record);
+     }
+
+     return resolvedRecords || null;
    }
 }
