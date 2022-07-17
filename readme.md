@@ -155,6 +155,36 @@ Output:
 - `owns` boolean
   - If the address owns a name.
 
+### `getText()`
+
+Get the external registry value assigned to a name.
+
+Input:
+
+ - `name` string
+   - The name to lookup
+ - `key` string
+   - The key of the record you want to find
+
+Output:
+
+  - `record` string | null
+    - The record
+
+### `getTexts()`
+
+Get the external registry values assigned to a name.
+
+Input:
+
+ - `name` string
+   - The name to lookup
+
+Output:
+
+ - `records` Record[]
+   - The records
+
 ## The utilities
 
 ### Contracts
