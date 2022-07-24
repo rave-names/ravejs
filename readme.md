@@ -30,8 +30,9 @@ import { providers } from 'ethers';
 
 const YOUR_PROVIDER = new providers.JsonRpcProvider('RPC_URL'); //JSON-RPC provider
 const YOUR_RAVE_ADDRESS = "0x0000000000000000000000000000000000000000"; //Rave Names contract address
+const YOUR_TEXT_RECORD_REGISTRY = "0x0000000000000000000000000000000000000001"; // Custom text registry
 
-const rave = new Rave(YOUR_RAVE_ADDRESS,YOUR_PROVIDER);
+const rave = new Rave(YOUR_RAVE_ADDRESS,YOUR_PROVIDER,YOUR_TEXT_RECORD_REGISTRY);
 ```
 
 ## The `RaveName` type
@@ -150,6 +151,11 @@ Output:
 
 Check if an address owns a Rave Name.
 
+Input:
+
+- `address` string
+  - The address
+
 Output:
 
 - `owns` boolean
@@ -184,6 +190,19 @@ Output:
 
  - `records` Record[]
    - The records
+
+### `isOwned()`
+
+Check if an address owns a Rave Name.
+
+Input:
+
+  - `name` string
+
+Output:
+
+  - `owned` boolean
+    - If the name is owned.
 
 ## The utilities
 

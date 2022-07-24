@@ -262,4 +262,23 @@ export class Rave {
 
      return resolvedRecords || null;
    }
+
+   /**
+   * isOwned
+   * ===========================================================================
+   * Returns if a name is owned
+   *
+   * [inputs]
+   *  => {name} : string; (The name)
+   *
+   * [returns]
+   *  => {owned} : bool; (isOwned)
+   */
+   public async isOwned(name: string): Promise<boolean> {
+     log(name)
+
+     let isOwned = await this.contract.functions.isOwnedByMapping(name.toUpperCase());
+
+     return isOwned;
+   }
 }
