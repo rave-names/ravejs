@@ -3,6 +3,7 @@ import { providers, Contract, Signer, utils, BigNumber, constants }          fro
 import { raveabi, externalabi, ravev1abi }                                   from '../abis';
 import { log }                                                               from './logging';
 import { contracts }                                                         from './contracts';
+import { color, index }                                                      from './colors';
 
 function s(x: any) {
   return x.toString();
@@ -38,7 +39,7 @@ export class Rave {
       this.contract = new Contract(address, ravev1abi, provider);
     }
     this.address = address;
-    console.warn('RaveV2 does not support external registries yet!');
+    console.log(color('WARNING: RaveV2 does not support external registries yet!', index['yellow'], true));
     this.externalRegistry = externalRegistry;
     this.externalContract = new Contract(externalRegistry, externalabi, provider);
   }
@@ -109,7 +110,7 @@ export class Rave {
    *  => {price} : number; (Price to pay to register a name, in Fantom)
    *
    */
-   public async registerName(name: string, signer: Signer, price: number): any {
+   public async registerName(name: string, signer: Signer, price: number): Promise<any> {
      let contract = new Contract(this.address, (this.v ? raveabi : ravev1abi), signer);
      let transaction = await contract.functions.registerName(name.toUpperCase(), { value: utils.parseEther(s(price)) });
      return transaction;
@@ -162,7 +163,7 @@ export class Rave {
 
        return resolvedName;
      } else {
-       if (!index) throw new Error('No index value for RaveV2 call');
+       if (typeof index === 'undefined') throw new Error('No index value for RaveV2 call');
        const name = (await this.contract.functions.getName(address, index))[0];
        const avatar = (await this.contract.functions.getAvatar(name))[0];
        const addresses = await this.contract.functions.getAddresses(name);
@@ -219,7 +220,7 @@ export class Rave {
 
        return name;
      } else {
-       if (!index) throw new Error('No index value for RaveV2 call');
+       if (typeof index === 'undefined') throw new Error('No index value for RaveV2 call');
        const name = (await this.contract.functions.getName(address, index))[0];
 
        if (name == '') return null; // return null if name doesnt exist
