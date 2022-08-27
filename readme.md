@@ -90,6 +90,8 @@ Input:
 
 - `address`: string
   - Target address
+- `index`: number
+  - Index of name to look for
 
 Output:
 
@@ -106,13 +108,14 @@ Output:
   - `addresses`: string
     - Multichain addresses
 
-### `reverseToName(address)`
+### `reverseToName(address, index)`
 
 Reverse searches the address to get only the name (not the avatar, etc.)
 
 Input:
 
 - `address`: string
+- `index`: number
 
 Output:
 
