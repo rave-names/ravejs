@@ -47,6 +47,9 @@ type RaveName = {
 };
 ```
 
+## Default address
+The default address is `0x98FEF8Da2e27984092B00D8d351b1e625B7E0492`, this address is returned as a placeholder, if it is returned, consider it the 0 address
+
 ## Write Transactions
 
 Some functions are write transactions and require a Signer to execute them.
