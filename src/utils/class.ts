@@ -45,46 +45,29 @@ export class Rave {
   }
 
   /**
-   * resolveNameToAddress
+   * Depracated - use `resolve(string)`
    * ===========================================================================
-   * Find the address that a name resolves to
-   *
-   * %async%
-   * [inputs]
-   *  => {name} : RaveName; (Name to find the owner address of)
-   *
-   * [returns]
-   *  => {address} : string; (Owner of name or zero address if resolution isnt a string)
+   * 
+   * #### `async` function
+   * @param name - Name to resolve (RaveName type)
+   * @returns Owner of `name` or the zero address if the name is unowned
    *
    */
   public async resolveNameToAddress(name: RaveName): Promise<string> {
-    if (!this.v) { // ravev1
-      let isOwned = await this.contract.functions.isOwnedByMapping(name.name.toUpperCase());
-      let resolution = await this.contract.functions.getOwnerOfName(name.name.toUpperCase());
-      if (isOwned) return resolution[0];
-      return Promise.resolve('0x0000000000000000000000000000000000000000');
-    } else {
-      let isOwned = await this.contract.functions.owned(name.name);
-      let resolution = await this.contract.functions.getOwner(name.name);
-      if (isOwned) return resolution[0];
-      return Promise.resolve('0x0000000000000000000000000000000000000000');
-    }
+    return this.resolve(name.name)
   }
 
   /**
-   * resolveStringToAddress
+   * Resolve
    * ===========================================================================
-   * Find the address that a name resolves to
-   *
-   * %async%
-   * [inputs]
-   *  => {name} : string; (Name to find the owner address of)
-   *
-   * [returns]
-   *  => {address} : string; (Owner of name or zero address if resolution isnt a string)
+   * ### Find the address that a name resolves to
+   * 
+   * #### `async` function
+   * @param name - Name to resolve
+   * @returns Owner of `name` or the zero address if the name is unowned
    *
    */
-   public async resolveStringToAddress(name: string): Promise<string> {
+   public async resolve(name: string): Promise<string> {
      if (!this.v) { // ravev1
        let isOwned = await this.contract.functions.isOwnedByMapping(name.toUpperCase());
        let resolution = await this.contract.functions.getOwnerOfName(name.toUpperCase());
@@ -93,22 +76,31 @@ export class Rave {
      } else {
        let isOwned = await this.contract.functions.owned(name);
        let resolution = await this.contract.functions.getOwner(name);
-       if (isOwned) return resolution[0];
+       const isNotPlaceHolder = resolution.toLowerCase() === "0x98FEF8Da2e27984092B00D8d351b1e625B7E0492".toLowerCase()
+       if (isOwned && isNotPlaceHolder) return resolution[0];
        return Promise.resolve('0x0000000000000000000000000000000000000000');
      }
    }
 
    /**
+    * # Depracated - use `resolve()`
+    * @param name The name to resolve
+    * @returns The resolved address
+    */
+   public async resolveStringToAddress(name: string): Promise<string> {
+    return await this.resolve(name);
+   }
+
+   /**
    * registerName
    * ===========================================================================
-   * Register a name
+   * ### Register a name
    *
-   * %async%
-   * [inputs]
-   *  => {name} : string; (Name to find the owner address of)
-   *  => {signer} : Signer; (Signer to execute the transaction)
-   *  => {price} : number; (Price to pay to register a name, in Fantom)
+   * @param name Name to register
+   * @param signer An ethers signer to execute the transaction
+   * @param price The price of a name (in FTM)
    *
+   * @returns The transaction's object as given by ethers
    */
    public async registerName(name: string, signer: Signer, price: number): Promise<any> {
      let contract = new Contract(this.address, (this.v ? raveabi : ravev1abi), signer);
@@ -119,15 +111,13 @@ export class Rave {
    /**
    * reverse
    * ===========================================================================
-   * Get all info of a name
+   * ### Get all info of an addresses name
    *
-   * %async%
-   * [inputs]
-   *  => {address} : string; (Name to find the owner address of)
-   *  => {index = 0} : number; (Index of name)
-   *
-   * [returns]
-   *  => {name} : RaveName; (RaveName type, containing everything)
+   * @param address The owner address
+   * @param index The index of the name (default: 0)
+   * 
+   * @returns A RaveName of the resolved data
+   * 
    */
    public async reverse(address: string, index: number = 0): Promise<RaveName> {
       if (!this.v) { //ravev1
@@ -163,7 +153,6 @@ export class Rave {
 
        return resolvedName;
      } else {
-       if (typeof index === 'undefined') throw new Error('No index value for RaveV2 call');
        const name = (await this.contract.functions.getName(address, index))[0];
        const avatar = (await this.contract.functions.getAvatar(name))[0];
        const addresses = await this.contract.functions.getAddresses(name);
@@ -204,13 +193,10 @@ export class Rave {
    * Get only the owned by an address, made for faster resolution, especially
    * when RPCs are slow
    *
-   * %async%
-   * [inputs]
-   *  => {address} : string; (Name to find the owner address of)
-   *  => {index = 0} : {number} (Index of the name)
-   *
-   * [returns]
-   *  => {name} : string; (The name)
+   * @param address the address
+   * @param index the index of the name
+   * 
+   * @returns the name of index `index` owned by `address`
    */
    public async reverseToName(address: string, index: number = 0): Promise<string | null> {
      if (!this.v) { // ravev1
@@ -234,11 +220,9 @@ export class Rave {
    * ===========================================================================
    * Re-init the contract, for customisation on the fly
    *
-   * [inputs]
-   *  => {options} : object;
-   *    -> {provider?} : ethers.Provider; (provider to use)
-   *    -> {address?} : string; (The address of the new rave contract)
-   *
+   * @param options.provider ethers provider to use
+   * @param options.address the address of the Rave contract
+   * 
    */
    public restart(options: RestartOptions): boolean {
      if (options.provider) {
@@ -253,9 +237,10 @@ export class Rave {
    /**
    * getPrice
    * ===========================================================================
-   * get the price of minting a name
-   * [returns]
-   *  => {price} : number; (The price)
+   * Get the price of minting a name
+   * 
+   * @returns The price of a name
+   * 
    */
    public async getPrice(): Promise<BigNumber> {
       return (!this.v) ? ((await this.contract.FEE_AMT())[0]) : ((await this.contract.price())[0]);
@@ -266,8 +251,7 @@ export class Rave {
    * ===========================================================================
    * Returns if an address holds a name
    *
-   * [returns]
-   *  => {owms} : boolean; (If the name is owned)
+   * @returns If the address owns a name
    */
    public async owns(address: string): Promise<boolean> {
       if (!this.v) { // ravev1
@@ -296,12 +280,11 @@ export class Rave {
    * ===========================================================================
    * Returns the text record of a name
    *
-   * [inputs]
-   *  => {name} : string; (The name)
-   *  => {key} : string; (The key to search for)
-   *
-   * [returns]
-   *  => {record} : string | null; (The record)
+   * @param name The name to look up
+   * @param key The text record key to search for
+   * 
+   * 
+   * @returns The text record
    */
    public async getText(name: string, key: string): Promise<string | null> {
      log(name); log(key);
@@ -320,11 +303,9 @@ export class Rave {
    * ===========================================================================
    * Returns the text records of a name
    *
-   * [inputs]
-   *  => {name} : string; (The name)
-   *
-   * [returns]
-   *  => {records} : string[]; (The records)
+   * @param name The name
+   * 
+   * @returns All the text records of the name, in form Record[]
    */
    public async getTexts(name: string): Promise<Record[] | null> {
      log(name);
@@ -345,11 +326,10 @@ export class Rave {
    * ===========================================================================
    * Returns if a name is owned
    *
-   * [inputs]
-   *  => {name} : string; (The name)
-   *
-   * [returns]
-   *  => {owned} : bool; (isOwned)
+   * @param name The name to lookup
+   * 
+   * @returns If the name is owned
+   * 
    */
    public async isOwned(name: string): Promise<boolean> {
      log(name)
