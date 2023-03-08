@@ -3,7 +3,7 @@ import { providers, Contract, Signer, utils, BigNumber, constants } from 'ethers
 import { raveabi, externalabi, ravev1abi } from '../abis';
 import { log } from './logging';
 import { contracts } from './contracts';
-import { color, index } from './colors';
+import { color, index as idx} from './colors';
 
 function s(x: any) {
   return x.toString();
@@ -33,13 +33,9 @@ export class Rave {
     version: boolean = true,
   ) {
     this.v = version;
-    if (version) {
-      this.contract = new Contract(address, raveabi, provider);
-    } else {
-      this.contract = new Contract(address, ravev1abi, provider);
-    }
+    this.contract = version ? new Contract(address, raveabi, provider) : new Contract(address, ravev1abi, provider);
     this.address = address;
-    console.log(color('WARNING: RaveV2 does not support external registries yet!', index['yellow'], true));
+    // console.log(color('WARNING: RaveV2 does not support external registries yet!', index['yellow'], true));
     this.externalRegistry = externalRegistry;
     this.externalContract = new Contract(externalRegistry, externalabi, provider);
   }
@@ -70,13 +66,13 @@ export class Rave {
   public async resolve(name: string): Promise<string> {
     if (!this.v) {
       // ravev1
-      let isOwned = await this.contract.functions.isOwnedByMapping(name.toUpperCase());
-      let resolution = await this.contract.functions.getOwnerOfName(name.toUpperCase());
+      const isOwned = await this.contract.functions.isOwnedByMapping(name.toUpperCase());
+      const resolution = await this.contract.functions.getOwnerOfName(name.toUpperCase());
       if (isOwned) return resolution[0];
       return Promise.resolve('0x0000000000000000000000000000000000000000');
     } else {
-      let isOwned = await this.contract.functions.owned(name);
-      let resolution = await this.contract.functions.getOwner(name);
+      const isOwned = await this.contract.functions.owned(name);
+      const resolution = await this.contract.functions.getOwner(name);
       const isNotPlaceHolder = resolution.toLowerCase() === '0x98FEF8Da2e27984092B00D8d351b1e625B7E0492'.toLowerCase();
       if (isOwned && isNotPlaceHolder) return resolution[0];
       return Promise.resolve('0x0000000000000000000000000000000000000000');
@@ -89,7 +85,7 @@ export class Rave {
    * @returns The resolved address
    */
   public async resolveStringToAddress(name: string): Promise<string> {
-    return await this.resolve(name);
+    return this.resolve(name);
   }
 
   /**
@@ -104,8 +100,8 @@ export class Rave {
    * @returns The transaction's object as given by ethers
    */
   public async registerName(name: string, signer: Signer, price: number): Promise<any> {
-    let contract = new Contract(this.address, this.v ? raveabi : ravev1abi, signer);
-    let transaction = await contract.functions.registerName(name.toUpperCase(), { value: utils.parseEther(s(price)) });
+    const contract = new Contract(this.address, this.v ? raveabi : ravev1abi, signer);
+    const transaction = await contract.functions.registerName(name.toUpperCase(), { value: utils.parseEther(s(price)) });
     return transaction;
   }
 
@@ -122,24 +118,24 @@ export class Rave {
    */
   public async reverse(address: string, index: number = 0): Promise<RaveName> {
     if (!this.v) {
-      //ravev1
+      // ravev1
       const name = (await this.contract.functions.getNameFromOwner(address))[0];
       const avatar = (await this.contract.functions.getAvatar(name))[0];
       const addresses = await this.contract.functions.getAttrLink(name);
 
-      if (name == '') {
-        var zeroName: RaveName = {
+      if (name === '') {
+        const zeroName: RaveName = {
           name: '',
           isOwned: false,
         };
         return zeroName;
       }
 
-      let addresses_parsed;
+      let addressesParsed;
       try {
-        addresses_parsed = JSON.parse(addresses);
+        addressesParsed = JSON.parse(addresses);
       } catch (e) {
-        addresses_parsed = {
+        addressesParsed = {
           ftm: address,
         };
       }
@@ -148,8 +144,8 @@ export class Rave {
         name: name.toLowerCase(),
         isOwned: true,
         owner: address,
-        avatar: avatar,
-        addresses: addresses_parsed,
+        avatar,
+        addresses: addressesParsed,
       };
 
       return resolvedName;
@@ -158,19 +154,19 @@ export class Rave {
       const avatar = (await this.contract.functions.getAvatar(name))[0];
       const addresses = await this.contract.functions.getAddresses(name);
 
-      if (name == '') {
-        var zeroName: RaveName = {
+      if (name === '') {
+        const zeroName: RaveName = {
           name: '',
           isOwned: false,
         };
         return zeroName;
       }
 
-      let addresses_parsed;
+      let addressesParsed;
       try {
-        addresses_parsed = JSON.parse(addresses);
+        addressesParsed = JSON.parse(addresses);
       } catch (e) {
-        addresses_parsed = {
+        addressesParsed = {
           ftm: address,
         };
       }
@@ -179,8 +175,8 @@ export class Rave {
         name: name.toLowerCase(),
         isOwned: true,
         owner: address,
-        avatar: avatar,
-        addresses: addresses_parsed,
+        avatar,
+        addresses: addressesParsed,
       };
 
       return resolvedName;
@@ -203,14 +199,14 @@ export class Rave {
       // ravev1
       const name = (await this.contract.functions.getNameFromOwner(address))[0].toLowerCase();
 
-      if (name == '') return null; // return null if name doesnt exist
+      if (name === '') return null; // return null if name doesnt exist
 
       return name;
     } else {
       if (typeof index === 'undefined') throw new Error('No index value for RaveV2 call');
       const name = (await this.contract.functions.getName(address, index))[0];
 
-      if (name == '') return null; // return null if name doesnt exist
+      if (name === '') return null; // return null if name doesnt exist
 
       return name;
     }
@@ -273,7 +269,7 @@ export class Rave {
 
       if (address === constants.AddressZero) return false; // zero address cant be owner
 
-      return (await this.contract.functions.balanceOf(address)) != 0;
+      return (await this.contract.functions.balanceOf(address)) !== 0;
     }
   }
 
@@ -317,10 +313,11 @@ export class Rave {
 
     const records = await this.externalContract.getRecords(name.toUpperCase());
 
-    let resolvedRecords: Record[] = [];
+    const resolvedRecords: Record[] = [];
+    // tslint:disable-next-line
     for (let key = 0; key < records.length; key++) {
       const value = await this.externalContract.getText(name.toUpperCase(), records[key]);
-      resolvedRecords.push({ key: records[key], value: value || null } as Record);
+      resolvedRecords.push({ key: records[key], value: value || null });
     }
 
     return resolvedRecords || null;
@@ -339,7 +336,7 @@ export class Rave {
   public async isOwned(name: string): Promise<boolean> {
     log(name);
 
-    let isOwned = this.v
+    const isOwned = this.v
       ? await this.contract.functions.owned(name)
       : await this.contract.functions.isOwnedByMapping(name.toUpperCase());
 

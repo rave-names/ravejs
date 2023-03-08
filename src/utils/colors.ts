@@ -21,7 +21,7 @@ const BGwhite = '\x1b[47m';
 
 const getColoredText = (text: string, color: string = 'white', warn: boolean = false) => {
   // remember to add reset at the end.
-  return (warn ? BGwhite : '') + color + text + index['reset'];
+  return (warn ? BGwhite : '') + color + text + index.reset;
 };
 
 export { getColoredText as color, index };

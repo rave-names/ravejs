@@ -1,6 +1,6 @@
 import { RaveName } from '../types.d';
 
-let addys: string = `{
+const addys: string = `{
   "btc":""
   "eth":"0x3e522051a9b1958aa1e828ac24afba4a551df37d"
   "bch":""
