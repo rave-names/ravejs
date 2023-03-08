@@ -1,11 +1,21 @@
 {
   "name": "@rave-names/rave",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "Utilities for Rave Names",
-  "main": "src/index.js",
+  "main": "lib/index.js",
+  "types": "lib/types.d.ts",
   "scripts": {
-    "run": "tsc && ts-node src/index.ts"
+    "build": "tsc",
+    "test": "",
+    "format": "npx prettier --write \"src/**/*.ts\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare" : "npm run build",
+    "prepublishOnly" : "npm test && npm run lint",
+    "preversion" : "npm run lint",
+    "version" : "npm run format && git add -A src",
+    "postversion" : "git push && git push --tags"
   },
+  "files": ["lib/**/*"],
   "keywords": [
     "crypto",
     "cryptocurrency",
